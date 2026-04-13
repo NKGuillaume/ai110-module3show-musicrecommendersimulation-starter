@@ -218,15 +218,16 @@ def compute_score(track, user_pref, pop_norm=0.0):
     """Compute a 0–100 weighted score for a track against a user preference dict."""
     # Linear scoring recipe matching the user's example.
     # Categorical bonuses
+    # EXPERIMENT: genre halved (2.0 → 1.0) so audio features can compete with labels
     raw = 0.0
     if track.get('genre') == user_pref.get('favorite_genre'):
-        raw += 2.0
+        raw += 1.0                          # was 2.0
     if track.get('mood') == user_pref.get('favorite_mood'):
         raw += 2.0
 
-    # Energy fit (weight 1.5)
+    # Energy fit (weight 3.0 — doubled from 1.5 to reward close energy matches more)
     target_energy = user_pref.get('target_energy', 0.5)
-    e_points = max(0.0, 1.0 - abs(track.get('energy', 0.5) - target_energy)) * 1.5
+    e_points = max(0.0, 1.0 - abs(track.get('energy', 0.5) - target_energy)) * 3.0  # was 1.5
     raw += e_points
 
     # Valence fit (weight 0.75)
@@ -255,7 +256,8 @@ def compute_score(track, user_pref, pop_norm=0.0):
         tempo_points = tempo_sim * 0.5
         raw += tempo_points
 
-    # Maximum raw possible: 8.25 (2+2+1.5+0.75+0.75+0.75+0.5)
-    max_raw = 8.25
+    # Maximum raw possible: 8.75 (1+2+3.0+0.75+0.75+0.75+0.5)
+    # EXPERIMENT: was 8.25 (genre=2.0, energy=1.5); now genre=1.0, energy=3.0
+    max_raw = 8.75
     score_0_100 = (raw / max_raw) * 100.0
     return round(score_0_100, 4)

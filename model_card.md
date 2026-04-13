@@ -1,111 +1,115 @@
 # 🎧 Model Card: Music Recommender Simulation
 
-## 1. Model Name  
+---
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+## 1. Model Name
+
+**VibeMatch 1.0**
+
+A simple music recommender that matches songs to what a user says they like.
 
 ---
 
-## 2. Intended Use  
+## 2. Intended Use
 
-Describe what your recommender is designed to do and who it is for. 
+This tool suggests songs from a small catalog based on a user's taste profile.
 
-Prompts:  
+It is meant for a classroom project — not for real users.
 
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+It works best when the user knows what genre and mood they want.
 
----
-
-## 3. How the Model Works  
-
-Explain your scoring approach in simple language.  
-
-Prompts:  
-
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+It should not be used if the genre they want is not in the catalog, because it will just return the wrong songs without saying anything.
 
 ---
 
-## 4. Data  
+## 3. How the Model Works
 
-Describe the dataset the model uses.  
+Every song gets a score out of 100.
 
-Prompts:  
+If the song's genre matches what the user wants, it gets bonus points. Same for mood.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+Then it checks how close the song's energy is to what the user wants. Energy matters the most out of all the audio features.
 
----
+After that it looks at valence (happy vs. sad feel), danceability, acousticness, and tempo.
 
-## 5. Strengths  
+All the points are added up and the top 5 songs win.
 
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+Each result also shows why the song was picked — like "genre match (+1.0)" or "energy fit (+2.8)" — so it is easy to understand.
 
 ---
 
-## 6. Limitations and Bias 
+## 4. Data
 
-Where the system struggles or behaves unfairly. 
+There are 18 songs in the catalog.
 
-Prompts:  
+Each song has: genre, mood, energy, tempo, valence, danceability, and acousticness.
 
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+There are 15 genres and 13 moods represented.
 
----
+But 13 of those 15 genres only have one song each. So most genre searches always return the same #1 song.
 
-## 7. Evaluation  
+The catalog also has more high-energy songs than low-energy ones.
 
-How you checked whether the recommender behaved as expected. 
-
-Prompts:  
-
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
-
-No need for numeric metrics unless you created some.
+There are no lyrics, no popularity scores, and no release dates.
 
 ---
 
-## 8. Future Work  
+## 5. Strengths
 
-Ideas for how you would improve the model next.  
+It works really well when the user wants lofi, pop, or rock — those genres have more than one song.
 
-Prompts:  
+Every result comes with a reason, so you can see exactly why a song ranked where it did.
 
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+It never crashes. Even if you give it a genre that doesn't exist, it still returns something.
+
+It is easy to tune — changing one weight number changes the whole ranking.
 
 ---
 
-## 9. Personal Reflection  
+## 6. Limitations and Bias
 
-A few sentences about your experience.  
+Most genres only have one song. That one song always wins for anyone who picks that genre, no matter what.
 
-Prompts:  
+For example, rock has one song — Storm Runner. A rock user will always get Storm Runner at #1, every time, forever. That is a filter bubble.
 
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+The genre and mood labels are also very powerful. In one test, a user asked for high-energy music but had "lofi" as their genre. The system still gave them quiet lofi songs because the genre label was worth so many points it drowned out everything else.
+
+The system also has no way to tell the user "sorry, we don't have that genre." It just quietly returns whatever is closest, which can be confusing.
+
+---
+
+## 7. Evaluation
+
+Six profiles were tested against the 18-song catalog.
+
+Three were normal: High-Energy Pop, Chill Lofi, and Deep Intense Rock.
+
+Three were designed to break things: one had a genre not in the catalog (k-pop), one had totally contradictory preferences (lofi + high energy), and one had no preferences at all.
+
+The normal profiles worked great. The right songs came back at the top.
+
+The biggest surprise was the contradictory profile. Even though the user asked for energy=0.92, the system returned quiet lofi songs because the genre label was too powerful to overcome.
+
+The blank profile was also interesting. With nothing to go on, all five results were basically tied — the system had no idea what to do.
+
+A weight experiment was also run. Halving the genre bonus and doubling the energy weight changed a few rankings in ways that felt more accurate.
+
+---
+
+## 8. Future Work
+
+Add more songs. Most genres only have one, which means there is no real competition. More songs would make the scores actually mean something.
+
+Add a diversity rule. Something like "no more than 2 songs from the same genre in the top 5" would help users discover more of the catalog.
+
+Tell the user when their genre is missing. Right now it just silently returns wrong results. A simple warning would make it way more honest.
+
+---
+
+## 9. Personal Reflection
+
+I thought recommenders had to learn from your history to work. This project showed me that even a totally static formula can give decent results if the user tells you what they want.
+
+The weirdest thing I learned is how much the labels matter. Two songs can sound similar, but if one is tagged "lofi" and one is tagged "ambient" they get treated completely differently.
+
+The contradictory profile test stuck with me. The system wasn't broken — it was doing exactly what the math said. But it gave the wrong result. That made me think real apps probably do this too, and users just never know.
