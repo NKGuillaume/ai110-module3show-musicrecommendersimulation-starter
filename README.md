@@ -17,20 +17,42 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommendation systems — like those used by Spotify or YouTube — work by learning a dense picture of each user from their listening history, skip patterns, and time-of-day habits, then finding content that is mathematically "close" to what the user has already enjoyed. They typically combine two strategies: content-based filtering (matching song attributes like genre, tempo, and energy to user preferences) and collaborative filtering (surfacing what similar users liked). They also quietly fold in popularity signals, so a brand-new or obscure track rarely breaks through even if it would be a perfect fit.
 
-Some prompts to answer:
+My version focuses purely on content-based matching. It scores each song by comparing its attributes — genre, mood, energy level, acousticness, danceability, tempo, and valence — against a user profile using a weighted formula, with genre and mood carrying the most influence. Rather than learning from past behavior or borrowing taste from other users, it prioritizes transparency and simplicity: every score can be traced back to a specific feature match, making it easy to see exactly why a song was recommended or why it was passed over.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+### Algorithm Recipe
 
-You can include a simple diagram or bullet list if helpful.
+Each song is scored against the user profile using the following steps:
+
+| Feature | How it's scored | Max points |
+|---|---|---|
+| Genre match | +2.0 if song genre == user's favorite genre | 2.0 |
+| Mood match | +2.0 if song mood == user's favorite mood | 2.0 |
+| Energy | `(1 - │song.energy − target_energy│) × 1.5` | 1.5 |
+| Valence | `(1 - │song.valence − target_valence│) × 0.75` | 0.75 |
+| Danceability | `(1 - │song.danceability − target_danceability│) × 0.75` | 0.75 |
+| Acousticness | `(1 - │song.acousticness − target_acousticness│) × 0.75` | 0.75 |
+| Tempo | `(1 - │song.tempo_bpm − target_tempo_bpm│ / 100) × 0.5` (only if target is set) | 0.5 |
+
+All negative intermediate values are clamped to 0. The raw total (max 8.25) is then scaled to a 0–100 score:
+
+```
+final_score = (raw / 8.25) × 100
+```
+
+Songs are ranked by final score and the top `k` (default 5) are returned.
+
+### Potential Biases
+
+- **Genre and mood dominate.** Together they account for up to 4 out of 8.25 raw points (~48%). A song that is a near-perfect match on energy, tempo, acousticness, and danceability but belongs to the wrong genre can score no higher than ~52/100 — meaning genuinely good fits can be buried simply because they're labeled differently.
+- **No popularity or novelty awareness.** The system treats a song with 10 streams the same as one with 10 million. In practice this is fairer, but it also means it won't surface songs the user is likely to already know.
+- **Fixed weights for all users.** The same formula is applied regardless of the user. A user who cares deeply about tempo and barely notices genre will still get genre-heavy results, because the weights are hardcoded rather than learned from behavior.
+- **Label dependency.** Scores for genre and mood are exact string matches. A song tagged "lo-fi" instead of "lofi" scores zero for genre even if it sounds identical.
 
 ---
 
+![alt text](image.png)
 ## Getting Started
 
 ### Setup
